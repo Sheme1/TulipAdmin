@@ -91,22 +91,27 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
       await addDoc(collection(db, "orders"), orderData);
 
       // Очищаем поля формы после успешного добавления заказа
-      setCustomer("");
-      setPrice("");
-      setSort("");
-      setFlowerQuantity("");
-      setPackaging("Нет");
-      setDelivery("Нет");
-      setDeliveryAddress("");
-      setDeliveryTime("");
-      setStatus("Новый");
-      setCreatedBy("Пользователь");
+      handleReset();
     } catch (err: any) {
       console.error("Ошибка добавления заказа: ", err);
       setError("Ошибка добавления заказа");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Функция для сброса (очищения) всех полей формы
+  const handleReset = () => {
+    setCustomer("");
+    setPrice("");
+    setSort("");
+    setFlowerQuantity("");
+    setPackaging("Нет");
+    setDelivery("Нет");
+    setDeliveryAddress("");
+    setDeliveryTime("");
+    setStatus("Новый");
+    setCreatedBy("Пользователь");
   };
 
   return (
@@ -280,6 +285,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
 
         <button type="submit" className="btn btn-success" disabled={loading}>
           {loading ? "Добавление..." : "Добавить заказ"}
+        </button>
+        <button type="button" className="btn btn-danger ms-2" onClick={handleReset}>
+          Очистить форму
         </button>
       </form>
     </div>

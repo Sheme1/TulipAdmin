@@ -210,11 +210,9 @@ const OrdersPage: React.FC = () => {
       </ul>
 
       {/* Вкладка добавления заказа */}
-      {activeTab === "add" && (
-        <section>
-          <OrderForm orders={orders} initialStocks={initialStocks} />
-        </section>
-      )}
+      <section style={{ display: activeTab === "add" ? "block" : "none" }}>
+        <OrderForm orders={orders} initialStocks={initialStocks} />
+      </section>
 
       {/* Вкладка списка заказов */}
       {activeTab === "list" && (
