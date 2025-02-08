@@ -32,15 +32,17 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
   const [sort, setSort] = useState("");
   const [flowerQuantity, setFlowerQuantity] = useState("");
   const [packaging, setPackaging] = useState<"Да" | "Нет">("Нет");
+  // Состояние для выбора доставки
+  const [delivery, setDelivery] = useState<"Да" | "Нет">("Нет");
+  // Состояния для адреса и времени доставки
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
-  const [delivery, setDelivery] = useState<"Да" | "Нет">("Нет");
   const [status, setStatus] = useState<"Новый" | "Выполняется" | "Выполнен">("Новый");
   const [createdBy, setCreatedBy] = useState<"Сервис" | "Пользователь">("Пользователь");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // При отправке формы происходит проверка доступного остатка цветов для выбранного сорта и вычисление нового orderNumber
+  // Функция обработки отправки формы
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -54,7 +56,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
     const maxStock = initialStocks[sort];
     const newOrderQuantity = Number(flowerQuantity);
 
-    // Если сумма уже заказанных и нового заказа превышает запас, выводим ошибку
+    // Если сумма уже заказанных и нового заказа превышает запас, выводим сообщение об ошибке
     if (existingQuantity + newOrderQuantity > maxStock) {
       setError(`Недостаточно остатков цветов для сорта ${sort}. Доступно: ${maxStock - existingQuantity}`);
       setLoading(false);
@@ -69,6 +71,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
 
     try {
       // Формируем объект заказа, добавляя новое поле orderNumber
+      // Поскольку поля address и время доставки могут быть пустыми при выборе "Нет",
+      // они передаются как есть.
       const orderData: Order = {
         customer,
         price: Number(price),
@@ -92,9 +96,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
       setSort("");
       setFlowerQuantity("");
       setPackaging("Нет");
+      setDelivery("Нет");
       setDeliveryAddress("");
       setDeliveryTime("");
-      setDelivery("Нет");
       setStatus("Новый");
       setCreatedBy("Пользователь");
     } catch (err: any) {
@@ -195,32 +199,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
           </select>
         </div>
 
-        {/* Адрес доставки */}
-        <div className="mb-3">
-          <label htmlFor="deliveryAddress" className="form-label">Адрес доставки</label>
-          <input
-            type="text"
-            id="deliveryAddress"
-            className="form-control"
-            value={deliveryAddress}
-            onChange={(e) => setDeliveryAddress(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Время доставки */}
-        <div className="mb-3">
-          <label htmlFor="deliveryTime" className="form-label">Время доставки</label>
-          <input
-            type="datetime-local"
-            id="deliveryTime"
-            className="form-control"
-            value={deliveryTime}
-            onChange={(e) => setDeliveryTime(e.target.value)}
-            required
-          />
-        </div>
-
         {/* Доставка */}
         <div className="mb-3">
           <label htmlFor="delivery" className="form-label">Доставка</label>
@@ -235,6 +213,37 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
             <option value="Нет">Нет</option>
           </select>
         </div>
+
+        {/* Условное отображение полей: Адрес и Время доставки показываются только если выбрано "Да" */}
+        {delivery === "Да" && (
+          <>
+            {/* Адрес доставки */}
+            <div className="mb-3">
+              <label htmlFor="deliveryAddress" className="form-label">Адрес доставки</label>
+              <input
+                type="text"
+                id="deliveryAddress"
+                className="form-control"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Время доставки */}
+            <div className="mb-3">
+              <label htmlFor="deliveryTime" className="form-label">Время доставки</label>
+              <input
+                type="datetime-local"
+                id="deliveryTime"
+                className="form-control"
+                value={deliveryTime}
+                onChange={(e) => setDeliveryTime(e.target.value)}
+                required
+              />
+            </div>
+          </>
+        )}
 
         {/* Статус заказа */}
         <div className="mb-3">
