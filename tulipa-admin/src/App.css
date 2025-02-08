@@ -1,8 +1,45 @@
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+/* Новый класс для рабочего окна: ширина 80% от экрана, с максимальной шириной и центрированием */
+.working-window {
+  width: 80%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Новый класс для страницы входа: ширина 30% от экрана, с максимальной шириной для корректного отображения */
+.login-window {
+  width: 30% !important;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Улучшенные базовые стили для повышения читаемости */
+body {
+  font-family: sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Стили для навигационных вкладок */
+.nav-tabs .nav-link {
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 0.8rem 1.2rem;
+}
+
+/* Улучшенные стили для карточек */
+.card {
+  padding: 2em;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
 .logo {
@@ -31,10 +68,6 @@
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
-}
-
-.card {
-  padding: 2em;
 }
 
 .read-the-docs {

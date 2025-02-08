@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container login-window mt-5">
       <h2>Вход в систему</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">

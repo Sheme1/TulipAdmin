@@ -12,14 +12,22 @@ import Header from "./Header";
 interface Order {
   id: string;
   customer: string;
-  total: number;
-  status: string;
+  price: number;
+  sort: string;
+  flowerQuantity: number;
+  packaging: "Да" | "Нет";
+  deliveryAddress: string;
+  deliveryTime: string;
+  delivery: "Да" | "Нет";
+  status: "Новый" | "Выполняется" | "Выполнен";
+  createdBy: "Сервис" | "Пользователь";
 }
 
 const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"add" | "list">("add");
 
   useEffect(() => {
     const ordersRef = collection(db, "orders");
@@ -27,10 +35,12 @@ const OrdersPage: React.FC = () => {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const ordersData: Order[] = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Order, "id">),
-        }));
+        const ordersData: Order[] = snapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            id: doc.id,
+            ...(doc.data() as Omit<Order, "id">),
+          })
+        );
         setOrders(ordersData);
         setLoading(false);
       },
@@ -48,34 +58,77 @@ const OrdersPage: React.FC = () => {
   if (error) return <div className="container mt-5 alert alert-danger">{error}</div>;
 
   return (
-    <div className="container mt-5">
+    <div className="container working-window mt-5">
       <Header />
-      <h2>Заказы тюльпанов</h2>
-      {orders.length === 0 ? (
-        <p>Нет заказов</p>
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Клиент</th>
-              <th>Сумма</th>
-              <th>Статус</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order, index) => (
-              <tr key={order.id}>
-                <td>{index + 1}</td>
-                <td>{order.customer}</td>
-                <td>{order.total}</td>
-                <td>{order.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <h2 className="mb-4">Управление заказами тюльпанов</h2>
+
+      <ul className="nav nav-tabs mb-4">
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "add" ? "active" : ""}`}
+            onClick={() => setActiveTab("add")}
+          >
+            Добавление заказа
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "list" ? "active" : ""}`}
+            onClick={() => setActiveTab("list")}
+          >
+            Список заказов
+          </button>
+        </li>
+      </ul>
+
+      {activeTab === "add" && (
+        <section>
+          <OrderForm />
+        </section>
       )}
-      <OrderForm />
+
+      {activeTab === "list" && (
+        <section>
+          {orders.length === 0 ? (
+            <p>Нет заказов</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Клиент</th>
+                  <th>Цена заказа</th>
+                  <th>Сорт</th>
+                  <th>Кол-во цветов</th>
+                  <th>Упаковка</th>
+                  <th>Адрес доставки</th>
+                  <th>Время доставки</th>
+                  <th>Доставка</th>
+                  <th>Статус заказа</th>
+                  <th>Кто создал заказ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order, index) => (
+                  <tr key={order.id}>
+                    <td>{index + 1}</td>
+                    <td>{order.customer}</td>
+                    <td>{order.price}</td>
+                    <td>{order.sort}</td>
+                    <td>{order.flowerQuantity}</td>
+                    <td>{order.packaging}</td>
+                    <td>{order.deliveryAddress}</td>
+                    <td>{order.deliveryTime}</td>
+                    <td>{order.delivery}</td>
+                    <td>{order.status}</td>
+                    <td>{order.createdBy}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
     </div>
   );
 };

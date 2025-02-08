@@ -2,10 +2,31 @@ import React, { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "./firebase.config";
 
+// Обновлённая типизация заказа с новыми полями
+interface Order {
+  customer: string;
+  price: number;
+  sort: string;
+  flowerQuantity: number;
+  packaging: "Да" | "Нет";
+  deliveryAddress: string;
+  deliveryTime: string;
+  delivery: "Да" | "Нет";
+  status: "Новый" | "Выполняется" | "Выполнен";
+  createdBy: "Сервис" | "Пользователь";
+}
+
 const OrderForm: React.FC = () => {
   const [customer, setCustomer] = useState("");
-  const [total, setTotal] = useState("");
-  const [status, setStatus] = useState("Новый");
+  const [price, setPrice] = useState("");
+  const [sort, setSort] = useState("");
+  const [flowerQuantity, setFlowerQuantity] = useState("");
+  const [packaging, setPackaging] = useState<"Да" | "Нет">("Нет");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryTime, setDeliveryTime] = useState("");
+  const [delivery, setDelivery] = useState<"Да" | "Нет">("Нет");
+  const [status, setStatus] = useState<"Новый" | "Выполняется" | "Выполнен">("Новый");
+  const [createdBy, setCreatedBy] = useState<"Сервис" | "Пользователь">("Пользователь");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,17 +36,32 @@ const OrderForm: React.FC = () => {
     setError(null);
 
     try {
-      const orderData = {
+      const orderData: Order = {
         customer,
-        total: Number(total),
+        price: Number(price),
+        sort,
+        flowerQuantity: Number(flowerQuantity),
+        packaging,
+        deliveryAddress,
+        deliveryTime,
+        delivery,
         status,
+        createdBy,
       };
 
       await addDoc(collection(db, "orders"), orderData);
+
       // Очистка формы после успешного добавления заказа
       setCustomer("");
-      setTotal("");
+      setPrice("");
+      setSort("");
+      setFlowerQuantity("");
+      setPackaging("Нет");
+      setDeliveryAddress("");
+      setDeliveryTime("");
+      setDelivery("Нет");
       setStatus("Новый");
+      setCreatedBy("Пользователь");
     } catch (err: any) {
       console.error("Ошибка добавления заказа: ", err);
       setError("Ошибка добавления заказа");
@@ -39,6 +75,7 @@ const OrderForm: React.FC = () => {
       <h4>Добавить новый заказ</h4>
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit}>
+        {/* Клиент */}
         <div className="mb-3">
           <label htmlFor="customer" className="form-label">Клиент</label>
           <input
@@ -50,33 +87,153 @@ const OrderForm: React.FC = () => {
             required
           />
         </div>
+
+        {/* Цена заказа */}
         <div className="mb-3">
-          <label htmlFor="total" className="form-label">Сумма</label>
+          <label htmlFor="price" className="form-label">Цена заказа</label>
           <input
             type="number"
-            id="total"
+            id="price"
             className="form-control"
-            value={total}
-            onChange={(e) => setTotal(e.target.value)}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
             required
             min="0"
             step="0.01"
           />
         </div>
+
+        {/* Сорт */}
         <div className="mb-3">
-          <label htmlFor="status" className="form-label">Статус</label>
+          <label htmlFor="sort" className="form-label">Сорт</label>
+          <select
+            id="sort"
+            className="form-select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            required
+          >
+            <option value="" disabled>Выберите сорт</option>
+            <option value="Andre Citroen">Andre Citroen</option>
+            <option value="Circuit">Circuit</option>
+            <option value="First star">First star</option>
+            <option value="Laptop">Laptop</option>
+            <option value="White Master">White Master</option>
+            <option value="Triple A">Triple A</option>
+            <option value="Supemodel">Supemodel</option>
+            <option value="Tresor">Tresor</option>
+            <option value="Strong Love">Strong Love</option>
+            <option value="Strong Gold">Strong Gold</option>
+            <option value="Respectable">Respectable</option>
+            <option value="Montezuma">Montezuma</option>
+            <option value="Columbus">Columbus</option>
+            <option value="Valdivia">Valdivia</option>
+          </select>
+        </div>
+
+        {/* Количество цветов */}
+        <div className="mb-3">
+          <label htmlFor="flowerQuantity" className="form-label">Количество цветов</label>
+          <input
+            type="number"
+            id="flowerQuantity"
+            className="form-control"
+            value={flowerQuantity}
+            onChange={(e) => setFlowerQuantity(e.target.value)}
+            required
+            min="0"
+          />
+        </div>
+
+        {/* Упаковка */}
+        <div className="mb-3">
+          <label htmlFor="packaging" className="form-label">Упаковка</label>
+          <select
+            id="packaging"
+            className="form-select"
+            value={packaging}
+            onChange={(e) => setPackaging(e.target.value as "Да" | "Нет")}
+            required
+          >
+            <option value="Да">Да</option>
+            <option value="Нет">Нет</option>
+          </select>
+        </div>
+
+        {/* Адрес доставки */}
+        <div className="mb-3">
+          <label htmlFor="deliveryAddress" className="form-label">Адрес доставки</label>
+          <input
+            type="text"
+            id="deliveryAddress"
+            className="form-control"
+            value={deliveryAddress}
+            onChange={(e) => setDeliveryAddress(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Время доставки */}
+        <div className="mb-3">
+          <label htmlFor="deliveryTime" className="form-label">Время доставки</label>
+          <input
+            type="datetime-local"
+            id="deliveryTime"
+            className="form-control"
+            value={deliveryTime}
+            onChange={(e) => setDeliveryTime(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Доставка */}
+        <div className="mb-3">
+          <label htmlFor="delivery" className="form-label">Доставка</label>
+          <select
+            id="delivery"
+            className="form-select"
+            value={delivery}
+            onChange={(e) => setDelivery(e.target.value as "Да" | "Нет")}
+            required
+          >
+            <option value="Да">Да</option>
+            <option value="Нет">Нет</option>
+          </select>
+        </div>
+
+        {/* Статус заказа */}
+        <div className="mb-3">
+          <label htmlFor="status" className="form-label">Статус заказа</label>
           <select
             id="status"
             className="form-select"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) =>
+              setStatus(e.target.value as "Новый" | "Выполняется" | "Выполнен")
+            }
             required
           >
             <option value="Новый">Новый</option>
-            <option value="В обработке">В обработке</option>
-            <option value="Завершён">Завершён</option>
+            <option value="Выполняется">Выполняется</option>
+            <option value="Выполнен">Выполнен</option>
           </select>
         </div>
+
+        {/* Кто создал заказ */}
+        <div className="mb-3">
+          <label htmlFor="createdBy" className="form-label">Кто создал заказ</label>
+          <select
+            id="createdBy"
+            className="form-select"
+            value={createdBy}
+            onChange={(e) => setCreatedBy(e.target.value as "Сервис" | "Пользователь")}
+            required
+          >
+            <option value="Сервис">Сервис</option>
+            <option value="Пользователь">Пользователь</option>
+          </select>
+        </div>
+
         <button type="submit" className="btn btn-success" disabled={loading}>
           {loading ? "Добавление..." : "Добавить заказ"}
         </button>
