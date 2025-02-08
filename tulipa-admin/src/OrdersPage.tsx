@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase.config";
-import OrderForm from "./OrderForm";
+import OrderForm, { Order } from "./OrderForm";
 import Header from "./Header";
 
 /*
@@ -22,34 +22,38 @@ import Header from "./Header";
      Если в поле поиска введено число, то из отфильтрованного списка выбирается только та запись, чей порядковый номер (индекс + 1) равен введённому числу.
 */
 
-interface Order {
-  id: string;
-  customer: string;
-  price: number;
-  sort: string;
-  flowerQuantity: number;
-  packaging: "Да" | "Нет";
-  deliveryAddress: string;
-  deliveryTime: string;
-  delivery: "Да" | "Нет";
-  status: "Новый" | "Выполняется" | "Выполнен";
-  createdBy: "Сервис" | "Пользователь";
-}
+// Задаем начальные запасы цветов по сортам с индексной сигнатурой для доступа по любому строковому ключу
+const initialStocks: { [key: string]: number } = {
+  "Andre Citroen": 300,
+  "Circuit": 300,
+  "First star": 300,
+  "Laptop": 405,
+  "White Master": 495,
+  "Triple A": 300,
+  "Supemodel": 300,
+  "Tresor": 375,
+  "Strong Love": 375,
+  "Strong Gold": 375,
+  "Respectable": 225,
+  "Montezuma": 405,
+  "Columbus": 225,
+  "Valdivia": 225,
+};
 
 const OrdersPage: React.FC = () => {
-  // Состояния заказов, загрузки, ошибок
+  // Состояния для загрузки заказов, ошибок и списка заказов
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Состояния вкладок: добавление, список, поиск
-  const [activeTab, setActiveTab] = useState<"add" | "list" | "search">("add");
+  // Состояние для выбранной вкладки (добавление, список, поиск, остаток цветов)
+  const [activeTab, setActiveTab] = useState<"add" | "list" | "search" | "inventory">("add");
 
   // Состояние редактируемого заказа
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
-  // Фильтры для поиска заказа
-  const [searchId, setSearchId] = useState(""); // поиск по порядковому номеру (индекс + 1)
+  // Фильтры для поиска
+  const [searchId, setSearchId] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
   const [searchPriceMin, setSearchPriceMin] = useState("");
   const [searchPriceMax, setSearchPriceMax] = useState("");
@@ -64,7 +68,7 @@ const OrdersPage: React.FC = () => {
   const [searchStatus, setSearchStatus] = useState("");
   const [searchCreatedBy, setSearchCreatedBy] = useState("");
 
-  // Подписка на заказы из Firestore
+  // Подписка на изменения в коллекции заказов в Firestore
   useEffect(() => {
     const ordersRef = collection(db, "orders");
     const q = query(ordersRef);
@@ -100,11 +104,22 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  // Функция сохранения изменений редактируемого заказа
+  // Функция сохранения изменений редактируемого заказа с проверкой доступности цветов
   const handleSave = async () => {
     if (editingOrder) {
+      // Вычисляем количество заказанных цветов по данному сорту, исключая редактируемую запись
+      const usedQuantityOther = orders
+        .filter(order => order.sort === editingOrder.sort && order.id !== editingOrder.id!)
+        .reduce((sum, order) => sum + order.flowerQuantity, 0);
+      const maxStock = initialStocks[editingOrder.sort];
+
+      if (usedQuantityOther + editingOrder.flowerQuantity > maxStock) {
+        alert(`Недостаточно остатков цветов для сорта ${editingOrder.sort}. Доступно: ${maxStock - usedQuantityOther}`);
+        return;
+      }
+
       try {
-        const orderRef = doc(db, "orders", editingOrder.id);
+        const orderRef = doc(db, "orders", editingOrder.id!);
         const { id, ...orderData } = editingOrder;
         await updateDoc(orderRef, orderData);
         setEditingOrder(null);
@@ -117,7 +132,7 @@ const OrdersPage: React.FC = () => {
   if (loading) return <div className="container mt-5">Загрузка заказов...</div>;
   if (error) return <div className="container mt-5 alert alert-danger">{error}</div>;
 
-  // Применяем фильтры по всем параметрам, кроме поиска по порядковому номеру (searchId)
+  // Применяем фильтры к списку заказов (без фильтра по порядковому номеру)
   const nonIdFilteredOrders = orders.filter((order) => {
     if (searchCustomer.trim() && !order.customer.toLowerCase().includes(searchCustomer.toLowerCase())) return false;
     if (searchPriceMin !== "" && order.price < Number(searchPriceMin)) return false;
@@ -135,11 +150,10 @@ const OrdersPage: React.FC = () => {
     return true;
   });
 
-  // После вычисления nonIdFilteredOrders (без учета searchId)
   // Добавляем порядковый номер для каждого заказа
   const filteredOrdersWithIndex = nonIdFilteredOrders.map((order, idx) => ({ order, number: idx + 1 }));
 
-  // Если введено значение для поиска по порядковому номеру, выбираем заказ с соответствующим порядковым номером
+  // Если введено значение для поиска по порядковому номеру, фильтруем записи
   const filteredOrders = searchId.trim()
     ? filteredOrdersWithIndex.filter(item => item.number === Number(searchId))
     : filteredOrdersWithIndex;
@@ -167,6 +181,7 @@ const OrdersPage: React.FC = () => {
       <Header />
       <h2 className="mb-4">Управление заказами тюльпанов</h2>
 
+      {/* Навигационные вкладки */}
       <ul className="nav nav-tabs mb-4">
         <li className="nav-item">
           <button className={`nav-link ${activeTab === "add" ? "active" : ""}`} onClick={() => setActiveTab("add")}>
@@ -183,14 +198,21 @@ const OrdersPage: React.FC = () => {
             Поиск заказов
           </button>
         </li>
+        <li className="nav-item">
+          <button className={`nav-link ${activeTab === "inventory" ? "active" : ""}`} onClick={() => setActiveTab("inventory")}>
+            Остаток цветов
+          </button>
+        </li>
       </ul>
 
+      {/* Вкладка добавления заказа */}
       {activeTab === "add" && (
         <section>
-          <OrderForm />
+          <OrderForm orders={orders} initialStocks={initialStocks} />
         </section>
       )}
 
+      {/* Вкладка списка заказов */}
       {activeTab === "list" && (
         <section>
           {orders.length === 0 ? (
@@ -216,7 +238,7 @@ const OrdersPage: React.FC = () => {
               <tbody>
                 {orders.map((order, idx) =>
                   editingOrder && editingOrder.id === order.id ? (
-                    <tr key={order.id}>
+                    <tr key={order.id!}>
                       <td>{idx + 1}</td>
                       <td>
                         <input
@@ -347,7 +369,7 @@ const OrdersPage: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    <tr key={order.id}>
+                    <tr key={order.id!}>
                       <td>{idx + 1}</td>
                       <td>{order.customer}</td>
                       <td>{order.price}</td>
@@ -363,7 +385,7 @@ const OrdersPage: React.FC = () => {
                         <button className="btn btn-primary me-2" onClick={() => setEditingOrder(order)}>
                           Редактировать
                         </button>
-                        <button className="btn btn-danger" onClick={() => handleDelete(order.id)}>
+                        <button className="btn btn-danger" onClick={() => handleDelete(order.id!)}>
                           Удалить
                         </button>
                       </td>
@@ -376,6 +398,7 @@ const OrdersPage: React.FC = () => {
         </section>
       )}
 
+      {/* Вкладка поиска заказов */}
       {activeTab === "search" && (
         <section>
           <div className="card p-3 mb-4">
@@ -562,7 +585,7 @@ const OrdersPage: React.FC = () => {
               <tbody>
                 {filteredOrders.map(({ order, number }) =>
                   editingOrder && editingOrder.id === order.id ? (
-                    <tr key={order.id}>
+                    <tr key={order.id!}>
                       <td>{number}</td>
                       <td>
                         <input
@@ -600,10 +623,7 @@ const OrdersPage: React.FC = () => {
                           className="form-control"
                           value={editingOrder.flowerQuantity}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              flowerQuantity: Number(e.target.value),
-                            })
+                            setEditingOrder({ ...editingOrder, flowerQuantity: Number(e.target.value) })
                           }
                         />
                       </td>
@@ -702,16 +722,13 @@ const OrdersPage: React.FC = () => {
                         <button className="btn btn-success me-2" onClick={handleSave}>
                           Сохранить
                         </button>
-                        <button
-                          className="btn btn-secondary"
-                          onClick={() => setEditingOrder(null)}
-                        >
+                        <button className="btn btn-secondary" onClick={() => setEditingOrder(null)}>
                           Отмена
                         </button>
                       </td>
                     </tr>
                   ) : (
-                    <tr key={order.id}>
+                    <tr key={order.id!}>
                       <td>{number}</td>
                       <td>{order.customer}</td>
                       <td>{order.price}</td>
@@ -732,7 +749,7 @@ const OrdersPage: React.FC = () => {
                         </button>
                         <button
                           className="btn btn-danger"
-                          onClick={() => handleDelete(order.id)}
+                          onClick={() => handleDelete(order.id!)}
                         >
                           Удалить
                         </button>
@@ -743,6 +760,53 @@ const OrdersPage: React.FC = () => {
               </tbody>
             </table>
           )}
+        </section>
+      )}
+
+      {/* Вкладка "Остаток цветов" */}
+      {activeTab === "inventory" && (
+        <section>
+          <h4>Остаток цветов</h4>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Сорт</th>
+                <th>Начальный запас</th>
+                <th>Заказано</th>
+                <th>Осталось</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(initialStocks).map(([sort, total]) => {
+                // Вычисляем для каждого сорта сколько уже заказано и сколько осталось
+                const used = orders
+                  .filter(order => order.sort === sort)
+                  .reduce((sum, order) => sum + order.flowerQuantity, 0);
+                const remaining = total - used;
+                return (
+                  <tr key={sort}>
+                    <td>{sort}</td>
+                    <td>{total}</td>
+                    <td>{used}</td>
+                    <td>{remaining}</td>
+                  </tr>
+                );
+              })}
+              <tr>
+                <td colSpan={3} className="text-end"><strong>Общее количество оставшихся цветов</strong></td>
+                <td>
+                  {
+                    Object.entries(initialStocks).reduce((acc, [sort, total]) => {
+                      const used = orders
+                        .filter(order => order.sort === sort)
+                        .reduce((sum, order) => sum + order.flowerQuantity, 0);
+                      return acc + (total - used);
+                    }, 0)
+                  }
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </section>
       )}
     </div>

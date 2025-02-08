@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "./firebase.config";
 
-// Обновлённая типизация заказа с новыми полями
-interface Order {
+// Обновлённая типизация заказа с добавленным полем id
+export interface Order {
+  id?: string; // Добавлено поле id, которое будет приходить из Firestore
   customer: string;
   price: number;
   sort: string;
@@ -16,7 +17,15 @@ interface Order {
   createdBy: "Сервис" | "Пользователь";
 }
 
-const OrderForm: React.FC = () => {
+// Интерфейс пропсов для компонента формы заказа.
+// orders — список уже существующих заказов, initialStocks — начальные запасы цветов по сортам.
+interface OrderFormProps {
+  orders: Order[];
+  initialStocks: { [key: string]: number };
+}
+
+const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
+  // Состояния полей формы
   const [customer, setCustomer] = useState("");
   const [price, setPrice] = useState("");
   const [sort, setSort] = useState("");
@@ -30,17 +39,34 @@ const OrderForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // При отправке формы происходит проверка доступного остатка цветов для выбранного сорта.
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    // Вычисляем количество уже заказанных цветов для данного сорта
+    const existingQuantity = orders
+      .filter(order => order.sort === sort)
+      .reduce((sum, order) => sum + order.flowerQuantity, 0);
+    // Получаем максимально доступное количество для данного сорта
+    const maxStock = initialStocks[sort];
+    const newOrderQuantity = Number(flowerQuantity);
+
+    // Если сумма уже заказанных и нового заказа превышает запас, выводим ошибку и отменяем добавление
+    if (existingQuantity + newOrderQuantity > maxStock) {
+      setError(`Недостаточно остатков цветов для сорта ${sort}. Доступно: ${maxStock - existingQuantity}`);
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Формируем объект заказа
       const orderData: Order = {
         customer,
         price: Number(price),
         sort,
-        flowerQuantity: Number(flowerQuantity),
+        flowerQuantity: newOrderQuantity,
         packaging,
         deliveryAddress,
         deliveryTime,
@@ -49,9 +75,10 @@ const OrderForm: React.FC = () => {
         createdBy,
       };
 
+      // Добавляем новый заказ в Firestore
       await addDoc(collection(db, "orders"), orderData);
 
-      // Очистка формы после успешного добавления заказа
+      // Очищаем поля формы после успешного добавления заказа
       setCustomer("");
       setPrice("");
       setSort("");
