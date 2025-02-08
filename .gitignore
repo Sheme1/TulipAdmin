@@ -1,0 +1,59 @@
+# Документация проекта (отключите, если хотите коммитить эти файлы)
+.cursorrules
+tz.txt
+plan.txt
+check-list.txt
+
+# Dependencies
+node_modules/
+
+# Yarn Plug'n'Play
+.pnp/
+.pnp.js
+
+# Локальные конфигурационные файлы
+*.local
+
+# Тесты
+coverage/
+
+# Артефакты сборки
+build/
+dist/
+dist-ssr/
+
+# Логи
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Файлы окружения
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE / редакторы
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# Firebase
+.firebase/
+firebase-debug.log*
+
+# TypeScript
+*.tsbuildinfo 
