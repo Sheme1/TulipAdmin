@@ -150,13 +150,17 @@ const OrdersPage: React.FC = () => {
     return true;
   });
 
-  // Добавляем порядковый номер для каждого заказа
-  const filteredOrdersWithIndex = nonIdFilteredOrders.map((order, idx) => ({ order, number: idx + 1 }));
+  // Используем статический номер заказа (order.orderNumber) для отображения и поиска.
+  // Если order.orderNumber не задан (для устаревших заказов) используем порядковый номер элемента.
+  const filteredOrdersWithStaticNumber = nonIdFilteredOrders.map((order, idx) => ({
+    order,
+    number: order.orderNumber !== undefined ? order.orderNumber : idx + 1,
+  }));
 
-  // Если введено значение для поиска по порядковому номеру, фильтруем записи
+  // При поиске по номеру заказа фильтруем записи по статическому номеру
   const filteredOrders = searchId.trim()
-    ? filteredOrdersWithIndex.filter(item => item.number === Number(searchId))
-    : filteredOrdersWithIndex;
+    ? filteredOrdersWithStaticNumber.filter(item => item.number === Number(searchId))
+    : filteredOrdersWithStaticNumber;
 
   // Опции для селектора сортов
   const sortOptions = [
@@ -236,10 +240,10 @@ const OrdersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order, idx) =>
+                {filteredOrders.map(({ order, number }) =>
                   editingOrder && editingOrder.id === order.id ? (
                     <tr key={order.id!}>
-                      <td>{idx + 1}</td>
+                      <td>{number}</td>
                       <td>
                         <input
                           type="text"
@@ -370,7 +374,7 @@ const OrdersPage: React.FC = () => {
                     </tr>
                   ) : (
                     <tr key={order.id!}>
-                      <td>{idx + 1}</td>
+                      <td>{number}</td>
                       <td>{order.customer}</td>
                       <td>{order.price}</td>
                       <td>{order.sort}</td>
@@ -632,10 +636,7 @@ const OrdersPage: React.FC = () => {
                           className="form-select"
                           value={editingOrder.packaging}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              packaging: e.target.value as "Да" | "Нет",
-                            })
+                            setEditingOrder({ ...editingOrder, packaging: e.target.value as "Да" | "Нет" })
                           }
                         >
                           <option value="">Выберите упаковку</option>
@@ -649,10 +650,7 @@ const OrdersPage: React.FC = () => {
                           className="form-control"
                           value={editingOrder.deliveryAddress}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              deliveryAddress: e.target.value,
-                            })
+                            setEditingOrder({ ...editingOrder, deliveryAddress: e.target.value })
                           }
                         />
                       </td>
@@ -662,10 +660,7 @@ const OrdersPage: React.FC = () => {
                           className="form-control"
                           value={editingOrder.deliveryTime}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              deliveryTime: e.target.value,
-                            })
+                            setEditingOrder({ ...editingOrder, deliveryTime: e.target.value })
                           }
                         />
                       </td>
@@ -674,10 +669,7 @@ const OrdersPage: React.FC = () => {
                           className="form-select"
                           value={editingOrder.delivery}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              delivery: e.target.value as "Да" | "Нет",
-                            })
+                            setEditingOrder({ ...editingOrder, delivery: e.target.value as "Да" | "Нет" })
                           }
                         >
                           <option value="">Выберите доставку</option>
@@ -690,10 +682,7 @@ const OrdersPage: React.FC = () => {
                           className="form-select"
                           value={editingOrder.status}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              status: e.target.value as "Новый" | "Выполняется" | "Выполнен",
-                            })
+                            setEditingOrder({ ...editingOrder, status: e.target.value as "Новый" | "Выполняется" | "Выполнен" })
                           }
                         >
                           <option value="">Выберите статус</option>
@@ -707,10 +696,7 @@ const OrdersPage: React.FC = () => {
                           className="form-select"
                           value={editingOrder.createdBy}
                           onChange={(e) =>
-                            setEditingOrder({
-                              ...editingOrder,
-                              createdBy: e.target.value as "Сервис" | "Пользователь",
-                            })
+                            setEditingOrder({ ...editingOrder, createdBy: e.target.value as "Сервис" | "Пользователь" })
                           }
                         >
                           <option value="">Выберите, кто создал заказ</option>

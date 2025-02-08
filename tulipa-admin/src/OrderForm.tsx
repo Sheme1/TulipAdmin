@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "./firebase.config";
 
-// Обновлённая типизация заказа с добавленным полем id
+// Обновлённая типизация заказа с добавленным полем orderNumber для статического номера заказа.
 export interface Order {
-  id?: string; // Добавлено поле id, которое будет приходить из Firestore
+  id?: string; // Идентификатор из Firestore
+  orderNumber?: number; // Статический номер заказа, который не меняется после создания
   customer: string;
   price: number;
   sort: string;
@@ -39,29 +40,35 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // При отправке формы происходит проверка доступного остатка цветов для выбранного сорта.
+  // При отправке формы происходит проверка доступного остатка цветов для выбранного сорта и вычисление нового orderNumber
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // Вычисляем количество уже заказанных цветов для данного сорта
+    // Вычисляем общее количество уже заказанных цветов для выбранного сорта
     const existingQuantity = orders
       .filter(order => order.sort === sort)
       .reduce((sum, order) => sum + order.flowerQuantity, 0);
-    // Получаем максимально доступное количество для данного сорта
+    // Получаем максимально доступное количество цветов для выбранного сорта
     const maxStock = initialStocks[sort];
     const newOrderQuantity = Number(flowerQuantity);
 
-    // Если сумма уже заказанных и нового заказа превышает запас, выводим ошибку и отменяем добавление
+    // Если сумма уже заказанных и нового заказа превышает запас, выводим ошибку
     if (existingQuantity + newOrderQuantity > maxStock) {
       setError(`Недостаточно остатков цветов для сорта ${sort}. Доступно: ${maxStock - existingQuantity}`);
       setLoading(false);
       return;
     }
 
+    // Вычисляем новый статический номер заказа:
+    // Берём все существующие номера заказов, если они заданы, иначе используем 0.
+    const currentOrderNumbers = orders.map(o => o.orderNumber || 0);
+    const maxOrderNumber = currentOrderNumbers.length > 0 ? Math.max(...currentOrderNumbers) : 0;
+    const newOrderNumber = maxOrderNumber + 1;
+
     try {
-      // Формируем объект заказа
+      // Формируем объект заказа, добавляя новое поле orderNumber
       const orderData: Order = {
         customer,
         price: Number(price),
@@ -73,6 +80,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
         delivery,
         status,
         createdBy,
+        orderNumber: newOrderNumber, // Присваиваем статический номер заказа
       };
 
       // Добавляем новый заказ в Firestore
