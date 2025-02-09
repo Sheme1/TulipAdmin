@@ -92,8 +92,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ orders, initialStocks }) => {
 
       // Очищаем поля формы после успешного добавления заказа
       handleReset();
-    } catch (err: any) {
-      console.error("Ошибка добавления заказа: ", err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Ошибка добавления заказа:", err.message);
+      } else {
+        console.error("Ошибка добавления заказа");
+      }
       setError("Ошибка добавления заказа");
     } finally {
       setLoading(false);

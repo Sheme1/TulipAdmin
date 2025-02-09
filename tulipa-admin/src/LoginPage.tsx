@@ -19,8 +19,13 @@ const LoginPage: React.FC = () => {
       await signInWithEmailAndPassword(auth, email, password);
       // Перенаправляем на защищённую страницу заказов после успешного входа
       navigate("/", { replace: true });
-    } catch (err: any) {
-      setError(err.message || "Ошибка входа");
+    } catch (err: unknown) {
+      // Проверяем, является ли ошибка экземпляром Error, чтобы корректно получить сообщение
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Ошибка входа");
+      }
     } finally {
       setLoading(false);
     }

@@ -120,7 +120,9 @@ const OrdersPage: React.FC = () => {
 
       try {
         const orderRef = doc(db, "orders", editingOrder.id!);
-        const { id, ...orderData } = editingOrder;
+        // Создаем копию объекта заказа и удаляем поле id
+        const orderData = { ...editingOrder };
+        delete orderData.id;
         await updateDoc(orderRef, orderData);
         setEditingOrder(null);
       } catch (err) {
