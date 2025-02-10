@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import OrdersPage from "./OrdersPage";
 import PrivateRoute from "./PrivateRoute";
+import TrackOrderPage from "./TrackOrderPage";
 import './App.css'
 
 /*
@@ -19,6 +20,14 @@ function App() {
           element={
             <PrivateRoute>
               <OrdersPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/track/:orderId"
+          element={
+            <PrivateRoute>
+              <TrackOrderPage />
             </PrivateRoute>
           }
         />

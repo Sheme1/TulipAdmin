@@ -389,6 +389,9 @@ const OrdersPage: React.FC = () => {
                         <button className="btn btn-primary me-2" onClick={() => setEditingOrder(order)}>
                           Редактировать
                         </button>
+                        <button className="btn btn-info me-2" onClick={() => window.open(`/track/${order.id}`, '_blank')}>
+                          Отслеживание
+                        </button>
                         <button className="btn btn-danger" onClick={() => handleDelete(order.id!)}>
                           Удалить
                         </button>
@@ -732,6 +735,12 @@ const OrdersPage: React.FC = () => {
                           onClick={() => setEditingOrder(order)}
                         >
                           Редактировать
+                        </button>
+                        <button
+                          className="btn btn-info me-2"
+                          onClick={() => window.open(`/track/${order.id}`, '_blank')}
+                        >
+                          Отслеживание
                         </button>
                         <button
                           className="btn btn-danger"
