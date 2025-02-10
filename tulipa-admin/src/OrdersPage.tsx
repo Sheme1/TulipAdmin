@@ -12,6 +12,7 @@ import {
 import { db } from "./firebase.config";
 import OrderForm, { Order } from "./OrderForm";
 import Header from "./Header";
+import { useNavigate } from "react-router-dom";
 
 /*
   Компонент OrdersPage — основная страница управления заказами.
@@ -41,6 +42,8 @@ const initialStocks: { [key: string]: number } = {
 };
 
 const OrdersPage: React.FC = () => {
+  const navigate = useNavigate();
+
   // Состояния для загрузки заказов, ошибок и списка заказов
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -389,7 +392,10 @@ const OrdersPage: React.FC = () => {
                         <button className="btn btn-primary me-2" onClick={() => setEditingOrder(order)}>
                           Редактировать
                         </button>
-                        <button className="btn btn-info me-2" onClick={() => window.open(`/track/${order.id}`, '_blank')}>
+                        <button
+                          className="btn btn-info me-2"
+                          onClick={() => navigate(`/track/${order.id}`)}
+                        >
                           Отслеживание
                         </button>
                         <button className="btn btn-danger" onClick={() => handleDelete(order.id!)}>
@@ -738,7 +744,7 @@ const OrdersPage: React.FC = () => {
                         </button>
                         <button
                           className="btn btn-info me-2"
-                          onClick={() => window.open(`/track/${order.id}`, '_blank')}
+                          onClick={() => navigate(`/track/${order.id}`)}
                         >
                           Отслеживание
                         </button>

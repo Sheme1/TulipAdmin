@@ -80,7 +80,18 @@ const TrackOrderPage: React.FC = () => {
           {updating ? "Обновление..." : "Заказ выполнен"}
         </button>
       )}
-      <button className="btn btn-secondary mt-3 ms-2" onClick={() => navigate(-1)}>
+      <button
+        className="btn btn-secondary mt-3 ms-2"
+        onClick={() => {
+          // Если в истории больше одной записи, возвращаемся назад,
+          // иначе перенаправляем на главную страницу
+          if (window.history.length > 1) {
+            navigate(-1);
+          } else {
+            navigate("/");
+          }
+        }}
+      >
         Назад
       </button>
     </div>
